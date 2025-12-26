@@ -73,7 +73,61 @@ class TestProductRoutes(TestCase):
         db.session.commit()
 
     def tearDown(self):
+        """Runs after each test"""
         db.session.remove()
+
+    def test_get_product(self):
+        """It should Get a single Product"""
+        test_product = self._create_products(1)[0]
+
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(data["name"], test_product.name)
+
+    def test_update_product(self):
+        """It should Update a Product"""
+        test_product = self._create_products(1)[0]
+        logging.debug("Test Product: %s", test_product.serialize())
+
+        test_product.name = "Updated Name"
+
+        response = self.client.put(
+            f"{BASE_URL}/{test_product.id}",
+            json=test_product.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(data["name"], "Updated Name")
+
+    def test_delete_product(self):
+        """It should Delete a Product"""
+        products = self._create_products(5)
+        product_count = self.get_product_count()
+        test_product = products[0]
+
+        response = self.client.delete(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(len(response.data), 0)
+
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        new_count = self.get_product_count()
+        self.assertEqual(new_count, product_count - 1)
+
+
+
+
+
+
+
+
+
 
     ############################################################
     # Utility function to bulk create products
@@ -178,3 +232,5 @@ class TestProductRoutes(TestCase):
         data = response.get_json()
         # logging.debug("data = %s", data)
         return len(data)
+
+

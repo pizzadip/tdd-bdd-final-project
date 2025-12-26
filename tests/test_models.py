@@ -104,3 +104,120 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+def test_read_a_product():
+    """It should Read a Product"""
+    product = ProductFactory()
+    product.id = None
+    product.create()
+
+    found = Product.find(product.id)
+    assert found is not None
+    assert found.id == product.id
+    assert found.name == product.name
+    assert found.description == product.description
+    assert Decimal(found.price) == product.price
+    assert found.available == product.available
+    assert found.category == product.category
+
+
+def test_update_a_product():
+    """It should Update a Product"""
+    product = ProductFactory()
+    product.id = None
+    product.create()
+
+    product.description = "Updated description"
+    product.available = False
+    product.update()
+
+    found = Product.find(product.id)
+    assert found.description == "Updated description"
+    assert found.available is False
+
+def test_delete_a_product():
+    """It should Delete a Product"""
+    product = ProductFactory()
+    product.id = None
+    product.create()
+
+    product.delete()
+    found = Product.find(product.id)
+    assert found is None
+
+def test_list_all_products():
+    """It should List all Products"""
+    # Clear the database (important because other tests add rows)
+    Product.remove_all()
+
+    # Now the DB should be empty
+    products = Product.all()
+    assert len(products) == 0
+
+    # Create 5 products
+    for _ in range(5):
+        product = ProductFactory()
+        product.id = None
+        product.create()
+
+    # Now we should have 5
+    products = Product.all()
+    assert len(products) == 5
+
+
+def test_find_by_name():
+    """It should Find a Product by Name"""
+    products = ProductFactory.create_batch(10)
+    for product in products:
+        product.id = None
+        product.create()
+
+    name = products[0].name
+    count = len([p for p in products if p.name == name])
+
+    found = Product.find_by_name(name)
+    assert found.count() == count
+    for product in found:
+        assert product.name == name
+
+def test_find_by_availability():
+    """It should Find a Product by Availability"""
+    Product.remove_all()
+
+    # Create a mix of products
+    for _ in range(10):
+        product = ProductFactory()
+        product.id = None
+        product.create()
+
+    # Pick one availability value that exists
+    available = Product.all()[0].available
+
+    # Expected count should come from the database
+    expected = Product.query.filter(Product.available == available).count()
+
+    found = Product.find_by_availability(available)
+    assert found.count() == expected
+    for product in found:
+        assert product.available == available
+
+
+def test_find_by_category():
+    """It should Find a Product by Category"""
+    Product.remove_all()
+
+    # Create a bunch of products
+    for _ in range(10):
+        product = ProductFactory()
+        product.id = None
+        product.create()
+
+    # Pick a category that exists in the DB
+    category = Product.all()[0].category
+
+    # Expected count should come from the DB
+    expected = Product.query.filter(Product.category == category).count()
+
+    found = Product.find_by_category(category)
+    assert found.count() == expected
+    for product in found:
+        assert product.category == category

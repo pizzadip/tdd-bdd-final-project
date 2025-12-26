@@ -63,9 +63,6 @@ class Category(Enum):
 class Product(db.Model):
     """
     Class that represents a Product
-
-    This version uses a relational database for persistence which is hidden
-    from us by SQLAlchemy's object relational mappings (ORM)
     """
 
     ##################################################
@@ -79,6 +76,21 @@ class Product(db.Model):
     category = db.Column(
         db.Enum(Category), nullable=False, server_default=(Category.UNKNOWN.name)
     )
+
+    @classmethod
+    def remove_all(cls):
+        """Removes all Products from the database"""
+        cls.query.delete()
+        db.session.commit()
+
+    @classmethod
+    def find_by_category(cls, category):
+        """Returns all Products in a category"""
+        return cls.query.filter(cls.category == category)
+
+
+
+
 
     ##################################################
     # INSTANCE METHODS
